@@ -1,11 +1,12 @@
 'use client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user) {
@@ -21,12 +22,15 @@ export default function Dashboard() {
     );
   }
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
+    setIsLoggingOut(true);
     try {
       await logout();
       router.push('/');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -44,9 +48,10 @@ export default function Dashboard() {
               </span>
               <button
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                disabled={isLoggingOut}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cerrar Sesión
+                {isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}
               </button>
             </div>
           </div>
@@ -57,11 +62,13 @@ export default function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
             <div className="text-center">
-              <img
-                className="mx-auto h-20 w-20 rounded-full"
-                src={user.photoURL}
-                alt={user.displayName}
-              />
+              {user.photoURL && (
+                <img
+                  className="mx-auto h-20 w-20 rounded-full"
+                  src={user.photoURL}
+                  alt={user.displayName || 'Usuario'}
+                />
+              )}
               <h2 className="mt-4 text-2xl font-bold text-gray-900">
                 ¡Bienvenido, {user.displayName}!
               </h2>
@@ -81,7 +88,7 @@ export default function Dashboard() {
                             Nombre completo
                           </dt>
                           <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            {user.displayName}
+                            {user.displayName || 'No disponible'}
                           </dd>
                         </div>
                         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
@@ -89,15 +96,23 @@ export default function Dashboard() {
                             Email
                           </dt>
                           <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            {user.email}
+                            {user.email || 'No disponible'}
                           </dd>
                         </div>
                         <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
                           <dt className="text-sm font-medium text-gray-500">
                             UID
                           </dt>
-                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 break-all">
                             {user.uid}
+                          </dd>
+                        </div>
+                        <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4">
+                          <dt className="text-sm font-medium text-gray-500">
+                            Proveedor
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {user.providerData[0]?.providerId || 'No disponible'}
                           </dd>
                         </div>
                       </dl>
